@@ -40,7 +40,7 @@ jobs:
     - name: Get old version
       id: old-version
       run: |
-        VERSION=$(gh release list -L 1 --json name | jq -r '.[0].name')
+        VERSION=$(gh release list -L 1 --json name | jq -r '.[0].name // "00.0b0"')
         echo version=${VERSION} >> "${GITHUB_OUTPUT}"
         echo "${VERSION}"
     - name: Bump version file
