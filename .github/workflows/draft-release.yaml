@@ -1,0 +1,59 @@
+name: Draft release
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+concurrency:
+  group: "${{ github.workflow }}"
+
+env:
+  GH_TOKEN: "${{ github.token }}"
+
+permissions: {}
+
+jobs:
+  bump-version:
+    name: Bump version
+    environment: release
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: true
+    - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+      with:
+        python-version: "3.14"
+    - name: Get old version
+      id: old-version
+      run: |
+        VERSION=$(gh release list -L 1 --json name | jq -r '.[0].name')
+        echo version=${VERSION} >> "${GITHUB_OUTPUT}"
+        echo "${VERSION}"
+    - name: Bump version file
+      env:
+        OLD_VERSION: ${{ steps.old-version.outputs.version }}
+      id: new-version
+      run: |
+        VERSION=$(uv --quiet run scripts/bump-version.py "${OLD_VERSION}")
+        echo version=${VERSION} >> "${GITHUB_OUTPUT}"
+        echo "${VERSION}"
+    - name: Push changes
+      env:
+        NEW_VERSION: ${{ steps.new-version.outputs.version }}
+      run: |
+        git config user.name "GitHub Actions Bot"
+        git config user.email "<>"
+        git add .
+        git commit -m "Bump version to ${NEW_VERSION}"
+        git push
+    - name: Create release
+      env:
+        NEW_VERSION: ${{ steps.new-version.outputs.version }}
+      run: |
+        gh release create "v${NEW_VERSION}" \
+          --draft \
+          --generate-notes \
+          --title "${NEW_VERSION}"
