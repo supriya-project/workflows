@@ -33,7 +33,9 @@ def update_pyproject_toml(year: int, month: int, beta: int) -> None:
 def build_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("--release", metavar="RELEASE", required=True)
-    parser.add_argument("--version-file-path", default=None, metavar="PATH", required=False)
+    parser.add_argument(
+        "--version-file-path", default=None, metavar="PATH", required=False
+    )
     return parser
 
 
