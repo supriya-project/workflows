@@ -31,6 +31,11 @@ jobs:
       contents: write
     runs-on: ubuntu-latest
     steps:
+    - name: Debug
+      env:
+        EVENT: ${{ github.event }}
+      run: |
+        echo "${EVENT}" | jq
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         persist-credentials: true
@@ -43,35 +48,3 @@ jobs:
         VERSION=$(gh release list -L 1 --json name | jq -r '.[0].name // "00.0b0"')
         echo version=${VERSION} >> "${GITHUB_OUTPUT}"
         echo "${VERSION}"
-    - name: Bump version file
-      env:
-        OLD_VERSION: ${{ steps.old-version.outputs.version }}
-        VERSION_FILE_PATH: ${{ inputs.version-file-path }}
-      id: new-version
-      run: |
-        VERSION=$(
-          uv --quiet run scripts/bump-version.py \
-            --release "${OLD_VERSION}" \
-            --version-file-path "${VERSION_FILE_PATH}" \
-        )
-        echo version=${VERSION} >> "${GITHUB_OUTPUT}"
-        echo "${VERSION}"
-    - name: Show diff
-      run: git diff
-    - name: Push changes
-      env:
-        NEW_VERSION: ${{ steps.new-version.outputs.version }}
-      run: |
-        git config user.name "GitHub Actions Bot"
-        git config user.email "<>"
-        git add .
-        git commit -m "Bump version to ${NEW_VERSION}"
-        git push
-    - name: Create release
-      env:
-        NEW_VERSION: ${{ steps.new-version.outputs.version }}
-      run: |
-        gh release create "v${NEW_VERSION}" \
-          --draft \
-          --generate-notes \
-          --title "${NEW_VERSION}"
