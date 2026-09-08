@@ -152,7 +152,7 @@ wheels = [
 
 [[package]]
 name = "workflows"
-version = "0.0b0"
+version = "26.9b0"
 source = { virtual = "." }
 
 [package.dev-dependencies]

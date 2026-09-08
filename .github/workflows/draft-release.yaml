@@ -2,7 +2,18 @@ name: Draft release
 
 on:
   workflow_call:
+    inputs:
+      version-file-path:
+        default: ""
+        required: false
+        type: string
   workflow_dispatch:
+    inputs:
+      version-file-path:
+        default: ""
+        required: false
+        type: string
+
 
 concurrency:
   group: "${{ github.workflow }}"
@@ -35,11 +46,18 @@ jobs:
     - name: Bump version file
       env:
         OLD_VERSION: ${{ steps.old-version.outputs.version }}
+        VERSION_FILE_PATH: ${{ inputs.version-file-path }}
       id: new-version
       run: |
-        VERSION=$(uv --quiet run scripts/bump-version.py "${OLD_VERSION}")
+        VERSION=$(
+          uv --quiet run scripts/bump-version.py \
+            --release "${OLD_VERSION}" \
+            --version-file-path "${VERSION_FILE_PATH}" \
+        )
         echo version=${VERSION} >> "${GITHUB_OUTPUT}"
         echo "${VERSION}"
+    - name: Show diff
+      run: git diff
     - name: Push changes
       env:
         NEW_VERSION: ${{ steps.new-version.outputs.version }}

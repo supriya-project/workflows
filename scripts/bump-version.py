@@ -16,8 +16,7 @@ def calculate_new_version_info(old_version_name: str) -> tuple[int, int, int]:
     return new_year, new_month, new_beta
 
 
-def rewrite_version_file(year: int, month: int, beta: int) -> None:
-    path = Path(__file__).parent.parent / "src" / "supriya_shm" / "_version.py"
+def rewrite_version_file(path: Path, year: int, month: int, beta: int) -> None:
     text = path.read_text()
     lines = text.splitlines()
     for i, line in enumerate(lines):
@@ -33,7 +32,8 @@ def update_pyproject_toml(year: int, month: int, beta: int) -> None:
 
 def build_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument("release")
+    parser.add_argument("--release", metavar="RELEASE", required=True)
+    parser.add_argument("--version-file-path", default=None, metavar="PATH", required=False)
     return parser
 
 
@@ -41,7 +41,8 @@ def run():
     parser = build_parser()
     parsed_args = parser.parse_args()
     year, month, beta = calculate_new_version_info(parsed_args.release)
-    rewrite_version_file(year, month, beta)
+    if parsed_args.version_file_path:
+        rewrite_version_file(Path(parsed_args.version_file_path), year, month, beta)
     update_pyproject_toml(year, month, beta)
     print(f"{year}.{month}b{beta}", end="")
 
